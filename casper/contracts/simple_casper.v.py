@@ -241,6 +241,8 @@ def initialize_epoch(epoch: num):
 def deposit(validation_addr: address, withdrawal_addr: address):
     assert self.current_epoch == block.number / self.epoch_length
     assert extract32(raw_call(self.purity_checker, concat('\xa1\x90>\xab', as_bytes32(validation_addr)), gas=500000, outsize=32), 0) != as_bytes32(0)
+    # Check the withdrawl_addr has not already been used. Note: The first validator always passes this check
+    assert self.validator_indexes[withdrawal_addr] == 0
     self.validators[self.nextValidatorIndex] = {
         deposit: msg.value / self.deposit_scale_factor[self.current_epoch],
         dynasty_start: self.dynasty + 2,
@@ -249,7 +251,7 @@ def deposit(validation_addr: address, withdrawal_addr: address):
         withdrawal_addr: withdrawal_addr,
         prev_commit_epoch: 0,
     }
-    self.validator_indexes[validation_addr] = self.nextValidatorIndex
+    self.validator_indexes[withdrawal_addr] = self.nextValidatorIndex
     self.nextValidatorIndex += 1
     self.second_next_dynasty_wei_delta += msg.value / self.deposit_scale_factor[self.current_epoch]
 
